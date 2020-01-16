@@ -1,0 +1,2 @@
+ModelName           LossFunction        NumTrain            BatchSize           MaxIters            Lambda              ValidPSNR           ValidRMSE           ValidSSIM           
+Enhanced-CompenNet                      5000                2                   3000                1                   14.330.33280.2501

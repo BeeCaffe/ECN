@@ -1,0 +1,1 @@
+ModelName           LossFunction        NumTrain            BatchSize           MaxIters            Lambda              UncmpPSNR           UncmpRMSE           UncmpSSIM           ValidPSNR           ValidRMSE           ValidSSIM           TrainLoss           ValidLoss           
