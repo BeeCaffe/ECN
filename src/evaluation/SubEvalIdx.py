@@ -12,6 +12,7 @@ class SubEvalIdx:
         self.imChannel = 3
         self.logger = logging.getLogger("SubEvalLog")
         self.logger.setLevel(logging.DEBUG)
+        self.gap = 10
         pass
 
     def CheckImage(self, img):
@@ -42,11 +43,12 @@ class SubEvalIdx:
         self.CheckImage(cmpImg)
         self.CheckImage(subImg)
         srcImg, cmpImg, subImg = self.Resize([srcImg, cmpImg, subImg])
-        newImg = np.zeros([ self.imHeight,3*self.imWidth, self.imChannel], np.uint8)
+        newImg = np.zeros([ self.imHeight+2*self.gap,3*self.imWidth+4*self.gap, self.imChannel], np.uint8)
+        newImg.fill(255)
         print(srcImg.shape)
-        newImg[0:self.imHeight, 0:self.imWidth,  :] = srcImg
-        newImg[0:self.imHeight, self.imWidth:self.imWidth*2, :] = cmpImg
-        newImg[0:self.imHeight, self.imWidth*2:self.imWidth*3, :] = subImg
+        newImg[self.gap:self.imHeight+self.gap, self.gap:self.imWidth+self.gap, :] = srcImg
+        newImg[self.gap:self.imHeight+self.gap, self.imWidth+2*self.gap:self.imWidth*2+2*self.gap, :] = cmpImg
+        newImg[self.gap:self.imHeight+self.gap, self.imWidth*2+3*self.gap:self.imWidth*3+3*self.gap, :] = subImg
         cv.imwrite(self.saveDir+time.strftime("%Y_%m_%d_%H_%M_%S", time.localtime()) +".jpg", newImg)
 
     def GetIndex(self):
