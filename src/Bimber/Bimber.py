@@ -99,9 +99,8 @@ class Bimber:
         for i in range(self.u*self.v):
             row = i//self.u
             col = i%self.u
-            I[row*self.patchSize:(row+1)*self.patchSize, col*self.patchSize:(col+1)*self.patchSize]/=self.Fi[i]
+            I[row*self.patchSize:(row+1)*self.patchSize, col*self.patchSize:(col+1)*self.patchSize]/=self.Fi[row, col]
         return I
-
 
     def compensateImg(self, R):
         S = self.computeScatter(R)
@@ -123,5 +122,5 @@ class Bimber:
         print('Done!')
 
 if __name__=='__main__':
-    bimber = Bimber(imRoot="F:\yandl\desire")
+    bimber = Bimber(imRoot="F:\yandl\PairNetDesire")
     bimber.compensateImgs()
