@@ -5,7 +5,7 @@ import time
 import math
 import src.tools.util as utils
 class Bimber:
-    def __init__(self, imRoot, saveRoot="./"):
+    def __init__(self, imRoot, saveRoot="../../"):
         self.width = 1024
         self.height = 768
         self.screenWidth = 0.47
@@ -26,11 +26,13 @@ class Bimber:
         self.doublePatchF()
 
     def onePathchF(self):
+
+        print("Compute One Patch F!")
         self.Fi = np.zeros((self.v, self.u), np.float32)
         for i in range(self.u*self.v):
-            xi = (i%self.u)*self.detaX+self.detaX/2.
+            xi = (i % self.u)*self.detaX+self.detaX/2.
             yi = self.screenHeight - (i/self.u)*self.detaYEd/2.
-            d = math.sqrt(-(1.1 * (self.screenWidth / 2. - xi) * 0.5253 - (self.screenWidth / 2. - xi) * (self.screenWidth / 2. - xi) - math.pow(.55, 2)));
+            d = math.sqrt(-(1.1 * (self.screenWidth / 2. - xi) * 0.5253 - (self.screenWidth / 2. - xi) * (self.screenWidth / 2. - xi) - math.pow(.55, 2)))
             ri = math.sqrt(d * d + yi * yi)
             alpha_i = self.PI / 2 - math.atan(d / yi)
             dA = 1. / (self.u * self.v)
@@ -40,6 +42,7 @@ class Bimber:
             self.Fi[row, col] = self.f * ftmp
 
     def doublePatchF(self):
+        print("Compute Double Patch F!")
         self.Fij = np.zeros((self.u * self.v, self.u * self.v), dtype=np.float32)
         for i in range(self.u*self.v):
             for j in range(self.u*self.v):
@@ -66,26 +69,24 @@ class Bimber:
                         alpha_i=self.PI / 2-beta_i
                         alpha_j=self.PI / 2-beta_j
                         dA=1. / (self.u *self.v)
-                        ftmp=dA * math.cos(alpha_i) * math.cos(alpha_j) / (rij * rij * self.PI);
+                        ftmp=dA * math.cos(alpha_i) * math.cos(alpha_j) / (rij * rij * self.PI)
                         self.Fij[i, j]=ftmp
                     else:
                         self.Fij[i, j]=0
+
         for i in range(self.u*self.v):
             sm = np.sum(self.Fij[i, :])
             self.Fij[i, :] /= sm
 
     def computeScatter(self, I):
-        S = np.zeros((self.height, self.width, 3),dtype=np.float32)
-        stTime = time.time()
-        print("Computing S : ")
+        S = np.zeros((self.height, self.width, 3), dtype=np.float32)
+        print("Compute S!")
         for i in range(0, self.u*self.v):
             row = i//self.u
             col = i%self.u
             patch = I[row*self.patchSize:(row+1)*self.patchSize, col*self.patchSize:(col+1)*self.patchSize]
             for j in range(0, self.u*self.v):
                 S[row*self.patchSize:(row+1)*self.patchSize, col*self.patchSize:(col+1)*self.patchSize] += patch*self.Fi[row, col]*self.Fij[j, i]
-                endTime = time.time()
-                utils.process("Computing S", i*j, self.u*self.v*self.u*self.v, stTime, endTime)
         return S
 
     '''
@@ -93,25 +94,21 @@ class Bimber:
     S: the compensated image
     '''
     def CompensateI(self, R, S):
-        I = np.array((self.height, self.width, 3), dtype=np.float32)
-        cols = np.size(R, 1)
-        rows = np.size(R, 0)
-        stTime = time.time()
-        print("Compensating : ")
+        print("Compensating!")
         I = np.subtract(R, S)
         for i in range(self.u*self.v):
             row = i//self.u
             col = i%self.u
             I[row*self.patchSize:(row+1)*self.patchSize, col*self.patchSize:(col+1)*self.patchSize]/=self.Fi[i]
-            endTime = time.time()
-            utils.process("Compensating", i, self.u*self.v, stTime,endTime)
         return I
 
-    def compensateImg(self,R):
+
+    def compensateImg(self, R):
         S = self.computeScatter(R)
-        I = self.CompensateI(R,S)
+        I = self.CompensateI(R, S)
         S_next = self.computeScatter(I)
-        return R-S_next
+        img = R - 0.2*S_next
+        return img
 
     def compensateImgs(self):
         nameLists = os.listdir(self.imRoot)
@@ -126,5 +123,5 @@ class Bimber:
         print('Done!')
 
 if __name__=='__main__':
-    bimber = Bimber(imRoot="C:\canary\data\desire")
+    bimber = Bimber(imRoot="F:\yandl\desire")
     bimber.compensateImgs()

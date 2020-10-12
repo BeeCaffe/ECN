@@ -1,6 +1,7 @@
 import cv2
 import os
 import numpy as np
+import time
 import math
 #the unified image size
 IMG_WIDTH=1024
@@ -8,7 +9,6 @@ IMG_HEIGHT=768
 CHANNELS=3
 MAX_FEATURES = 500
 GOOD_MATCH_PERCENT = 0.15
-import tensorflow as tf
 
 def Resize(img,width,height):
     """
@@ -361,44 +361,44 @@ def FID(imTag, imRef, flag=0):
     print('fid : ',fid)
     return fid
 
-def psnr(imTag, imRef):
-    """
-    psnr(imTag, imRef) -> psnr
-    :brief : computes the psnr of two images.
-    :param imTag: the taeget image
-    :param imRef: the reference image
-    :return: psnr
-    """
-    graph = tf.Graph()
-    with graph.as_default():
-        imTag = np.array(imTag, dtype=np.float32)
-        imRef = np.array(imRef, dtype=np.float32)
-        imTensor = tf.convert_to_tensor(imTag)
-        refTensor = tf.convert_to_tensor(imRef)
-        psnr = tf.image.psnr(imTensor, refTensor, 255)
-        with tf.Session() as sess:
-            psnr = psnr.eval()
-    # print('psnr :', psnr)
-    return psnr
+# def psnr(imTag, imRef):
+#     """
+#     psnr(imTag, imRef) -> psnr
+#     :brief : computes the psnr of two images.
+#     :param imTag: the taeget image
+#     :param imRef: the reference image
+#     :return: psnr
+#     """
+#     graph = tf.Graph()
+#     with graph.as_default():
+#         imTag = np.array(imTag, dtype=np.float32)
+#         imRef = np.array(imRef, dtype=np.float32)
+#         imTensor = tf.convert_to_tensor(imTag)
+#         refTensor = tf.convert_to_tensor(imRef)
+#         psnr = tf.image.psnr(imTensor, refTensor, 255)
+#         with tf.Session() as sess:
+#             psnr = psnr.eval()
+#     # print('psnr :', psnr)
+#     return psnr
 
-def ssim(imTag, imRef):
-    """
-    :brief : compute the ssim f two images
-    :param imTag:
-    :param imRef:
-    :return:
-    """
-    graph = tf.Graph()
-    with graph.as_default():
-        imTag = np.array(imTag, dtype=np.float32)
-        imRef = np.array(imRef, dtype=np.float32)
-        imTensor = tf.convert_to_tensor(imTag)
-        refTensor = tf.convert_to_tensor(imRef)
-        ssim = tf.image.ssim(imTensor, refTensor, 255)
-        with tf.Session() as sess:
-            ssim = ssim.eval()
-    # print('ssim :', ssim)
-    return ssim
+# def ssim(imTag, imRef):
+#     """
+#     :brief : compute the ssim f two images
+#     :param imTag:
+#     :param imRef:
+#     :return:
+#     """
+#     graph = tf.Graph()
+#     with graph.as_default():
+#         imTag = np.array(imTag, dtype=np.float32)
+#         imRef = np.array(imRef, dtype=np.float32)
+#         imTensor = tf.convert_to_tensor(imTag)
+#         refTensor = tf.convert_to_tensor(imRef)
+#         ssim = tf.image.ssim(imTensor, refTensor, 255)
+#         with tf.Session() as sess:
+#             ssim = ssim.eval()
+#     # print('ssim :', ssim)
+#     return ssim
 
 def mse(imTag, imRef):
     """
@@ -506,6 +506,36 @@ def getWindow(img):
     cv2.destroyAllWindows()
 
     return x, y, width, height, mid
+
+def CombineImages1DXLim(imgList1D, gap = 10, ImageSize = (1024, 768)):
+    n = len(imgList1D)
+    imWidth, imHeight, imChannel = ImageSize[0], ImageSize[1], 3
+    imgList1D = [cv2.resize(img, ImageSize) for img in imgList1D]
+    newImg = np.zeros([imHeight+2*gap, n*imWidth+(n+1)*gap, imChannel], np.uint8)
+    newImg.fill(255)
+    for i in range(1, n+1):
+        img = imgList1D[i-1]
+        newImg[gap:imHeight + gap, gap*i+imWidth*(i-1):imWidth*i + i*gap, :] = img
+    return newImg
+
+def CombineImages1DYLim(imgList1D, gap = 10):
+    n = len(imgList1D)
+    imHeight, imWidth, imChannel = imgList1D[0].shape
+    imgList1D = [cv2.resize(img, (imWidth, imHeight)) for img in imgList1D]
+    newImg = np.zeros([n*imHeight+(n+1)*gap, imWidth+2*gap,  imChannel], np.uint8)
+    newImg.fill(255)
+    for i in range(1, n+1):
+        img = imgList1D[i-1]
+        newImg[gap*i+imHeight*(i-1):imHeight*i + i*gap, gap:imWidth + gap, :] = img
+    return newImg
+
+def CombineImages2D(imgList2D, gap = 10, ImageSize = [1024,768]):
+    imgList1D = []
+    for img in imgList2D:
+        newImg = CombineImages1DXLim(img, gap, ImageSize)
+        imgList1D.append(newImg)
+    ret = CombineImages1DYLim(imgList1D)
+    return ret
 
 
 if __name__=="__main__":
